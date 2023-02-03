@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.ojn file format documentation</title>
+
+    <link rel="stylesheet" href="./Desktop.css">
+</head>
+<body>
+<main>
+    <div class="Note"><p>Documentation by: ChaosFox/DarkFox, MrKishi, and Vittee</p></div>
+
+    <h1>The .ojn file format</h1>
+    <p>The .ojn file format is used in O2Jam to store the metadata for the song and
+        the maps, the BPMs, images, and the placement of the notes.
+        <br><br>
+        O2Jam uses 2 images, one functions as a thumbnail and the other as a splash
+        screen. The thumbnail is shown while you are selecting a map to play and
+        the splash image is shown when you select the map. These images are in
+        the .ojn file.
+        <br><br>
+        In O2Jam a song usually comes with 3 maps labeled by difficulty: EX
+        (Easy), NX (Normal), and HX (Hard). These maps are stored in the .ojn file.
+        <br><br>
+        There are 3 types of notes: normal-notes, long-notes, and autoplay-notes.
+        The autoplay-notes are not meant to be hit by the player, instead they
+        are invisible and the purpose of them is to play audio without depending on user input.
+        <br><br>
+        An .ojn is mostly composed of events, and events comes inside event packages.
+        An event package has a header that already tells you in which measure and in which
+        channel the events are going to be deployed, as well as telling you the number of events.
+    </p>
+
+    <table>
+        <caption>Event package header (size 8 bytes)</caption>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Type/Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>The measure in where the events are going to be deployed.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>The channel the events belong to.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>The number of events.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Since the package header already tells you the measure and the channel, an
+        event is just the value. The size of the value is 4 bytes and since an event
+        is just the value it means that the size of an event is 4 bytes. These 4
+        bytes can be interpreted as a float or as a structure called "Note event"
+        depending on the channel.
+        <br><br>
+        O2Jam counts measures starting from 0, and the channel range is 0-22. The
+        description of the channels is as follows:
+        <br><br>
+        Channel 0 = Measure fraction channel
+        <br>
+        Channel 1 = BPM channel
+        <br>
+        Channel 2 = Column 1 channel
+        <br>
+        Channel 3 = Column 2 channel
+        <br>
+        Channel 4 = Column 3 channel
+        <br>
+        Channel 5 = Column 4 channel
+        <br>
+        Channel 6 = Column 5 channel
+        <br>
+        Channel 7 = Column 6 channel
+        <br>
+        Channel 8 = Column 7 channel
+        <br>
+        Channel 9-22 = Autoplay-note channels
+        <br><br>
+        If the channel is 0 or 1, an event is interpreted as a float. In channel 0
+        the float indicates how much of the measure is going to be used: if the value
+        is 0.75, the size of the measure is going to be 75% the normal size.
+        In channel 1 the float represents a BPM value.
+        <br><br>
+        If the channel ranges between 2 and 22 an event is interpreted as a Note event
+        structure.
+    </p>
+
+    <table>
+        <caption>Note event structure (size 4 bytes)</caption>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Type/Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Reference: A reference to a music sample in the .ojm file. If the reference is 0 the event is ignored.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>Volume: The volume to play the audio with. 0 means max volume.</td>
+                <td>Half a byte, 4 bits</td>
+            </tr>
+            <tr>
+                <td>Pan: The panning for the audio. If this value ranges between 1 and 7 it means left -&gt; center,
+                    0 and 8 means center, and ranging between 9 and 15 means center -&gt; right.
+                </td>
+                <td>Half a byte, 4 bits</td>
+            </tr>
+            <tr>
+                <td>Note-type: You must compare the value as an int like 0 not '0'. 0 means normal note, 2 means
+                    start of a long note, and 3 means end of a long note. 4 indicates the use of an .ogg music
+                    sample in Notetool (Notetool is a map editor for O2Jam maps).
+                </td>
+                <td>char 1 byte</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>The position of an event inside a measure is determined by the number of
+        events: if you got an event package with 16 events, the position of the
+        8th event is 8/16, 8/16 yields 0.5 which means that the 8th event is
+        located in the middle of the measure. This is why Note events that are
+        to be ignored (with reference 0) exists, their purpose is for padding.
+        <br><br>
+        The .ojn format has an initial header that contains the package count for
+        the EX, NX, and HX maps, it also stores other important information.
+        Knowing the event package count for a certain map, the size of an
+        event package header (8 bytes), the number of events in a package, and that
+        the size of an event is 4 bytes: you can design the loop for extracting
+        the events in the event packages.
+    </p>
+
+    <table>
+        <caption>OJN initial header (size 300 bytes)</caption>
+        <thead>
+            <tr>
+                <th>Byte start</th>
+                <th>Description</th>
+                <th>Type/Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>0</td>
+                <td>ID of the song: Usually the same ID in the name of the file (o2ma[song ID].ojn).</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>File signature: An integer with the value 0x006E6A6F (7,236,207 in base 10).</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Format version: The version of the .ojn format. Usually the value is 2.9</td>
+                <td>Float 4 bytes</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>
+                    Genre: A number representing the genre of the song as follows:
+                    <br><br>
+                    0 means Ballad
+                    <br>
+                    1 means Rock
+                    <br>
+                    2 means Dance
+                    <br>
+                    3 means Techno
+                    <br>
+                    4 means Hip-Hop
+                    <br>
+                    5 means R&B
+                    <br>
+                    6 means Jazz
+                    <br>
+                    7 means Funk
+                    <br>
+                    8 means Classical
+                    <br>
+                    9 means Traditional
+                    <br>
+                    10 means Etc
+                </td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>BPM of the song.</td>
+                <td>Float 4 bytes</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>Difficulty level for the EX map.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>Difficulty level for the NX map.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>24</td>
+                <td>Difficulty level for the HX map.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>26</td>
+                <td>Unknown.</td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>28</td>
+                <td>Number of events in the EX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>Number of events in the NX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>36</td>
+                <td>Number of events in the HX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>40</td>
+                <td>Number of playable notes in the EX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>44</td>
+                <td>Number of playable notes in the NX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>48</td>
+                <td>Number of playable notes in the HX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>52</td>
+                <td>Number of measures in the EX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>56</td>
+                <td>Number of measures in the NX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>60</td>
+                <td>Number of measures in the HX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>64</td>
+                <td>Number of packages in the EX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>68</td>
+                <td>Number of packages in the NX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>72</td>
+                <td>Number of packages in the HX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>76</td>
+                <td>Old format version: The former section for holding the format version. It seems they preferred a
+                    float representation instead of this one.
+                </td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>78</td>
+                <td>Old song ID: The former section for holding the ID of the song. It seems they changed it to an integer
+                    of 4 bytes so the possible values for the ID are bigger.
+                </td>
+                <td>Short integer 2 bytes</td>
+            </tr>
+            <tr>
+                <td>80</td>
+                <td>Old genre: The former section for holding the song's genre. It seems they used to store the genre
+                    in a string but ended up replacing the string for the genre table.
+                </td>
+                <td>String 20 bytes</td>
+            </tr>
+            <tr>
+                <td>100</td>
+                <td>Size of the thumbnail image in bytes. The thumbnail is an 8x8 .bmp image. The initial header
+                    does not tell you the offset for the thumbnail, its offset is determined like this: if the
+                    size of the thumbnail is - for example - 500 bytes, then the last 500 bytes of the .ojn
+                    file are the thumbnail image.
+                </td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>104</td>
+                <td>Version of the map. It seems they had in mind the possibility of updating the patterns of the map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>108</td>
+                <td>Title of the song.</td>
+                <td>String 64 bytes</td>
+            </tr>
+            <tr>
+                <td>172</td>
+                <td>Artist of the song.</td>
+                <td>String 32 bytes</td>
+            </tr>
+            <tr>
+                <td>204</td>
+                <td>Mapper.</td>
+                <td>String 32 bytes</td>
+            </tr>
+            <tr>
+                <td>236</td>
+                <td>Name of the .ojm file associated with this .ojn file. Usually is the same name of this .ojn
+                    file but ending with the .ojm extension.
+                </td>
+                <td>String 32 bytes</td>
+            </tr>
+            <tr>
+                <td>268</td>
+                <td>Size of the splash image in bytes. The splash image is a .jpg image.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>272</td>
+                <td>Duration of the song for the EX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>276</td>
+                <td>Duration of the song for the NX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>280</td>
+                <td>Duration of the song for the HX map.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>284</td>
+                <td>Offset for the EX section.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>288</td>
+                <td>Offset for the NX section.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>292</td>
+                <td>Offset for the HX section.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+            <tr>
+                <td>296</td>
+                <td>Offset for the splash image.</td>
+                <td>Integer 4 bytes</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

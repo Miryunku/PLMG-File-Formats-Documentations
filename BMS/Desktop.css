@@ -1,0 +1,123 @@
+body {
+    font-family: Consolas;
+    padding: 1.25rem 3.125rem 1.25rem 3.125rem;
+    background-color: black;
+}
+
+h1, h2, h3 {
+    color: #E8B74B;
+}
+
+:is(article, section, main, header) h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2.125rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+p {
+    font-size: 1.125rem;
+    color: silver;
+}
+
+pre {
+    font-size: 1.125rem;
+    color: silver;
+}
+
+a {
+    color: deepskyblue;
+}
+
+a:visited {
+    color: deepskyblue;
+}
+
+::selection {
+    color: seashell;
+    background-color: dimgray;
+}
+
+table {
+    border-collapse: collapse;
+    border: 1px solid #353F5F;
+}
+
+th, td {
+    padding: 0.3125rem 0.625rem;
+    border: 1px solid #353F5F;
+    color: silver;
+}
+
+th {
+    background-color: #153038;
+}
+
+td {
+    text-align: left;
+    background-color: #1C130F;
+}
+
+caption {
+    width: fit-content;
+    padding: 0.3125rem 0.625rem;
+    background-color: #3A3268;
+    color: whitesmoke;
+}
+
+/* || Custom classes */
+
+#toc-root {
+    background-color: #160D08;
+    border: 1px solid #622A0F;
+    width: fit-content;
+    padding: 0.875rem;
+}
+
+#toc-root a {
+    display: block;
+    text-decoration: none;
+    font-size: 1.125rem;
+}
+
+div.Attention {
+    border-left: 8px solid teal;
+    padding: 0.625rem 1.25rem 0.625rem 1.25rem;
+    background-color: #192F42;
+}
+
+div.Attention p {
+    color: white;
+}
+
+div.Caution {
+    border-left: 8px solid red;
+    padding: 0.625rem 1.25rem 0.625rem 1.25rem;
+    background-color: #630019;
+}
+
+div.Caution p {
+    color: white;
+}
+
+.Highlight {
+    /* color: #FDA9E5; */
+    color: coral;
+}
+
+.Highlight2 {
+    color: wheat;
+}
+
+.Highlight3 {
+    color: crimson;
+}
+
+.HighlightAux {
+    color: #A9FDB4;
+}

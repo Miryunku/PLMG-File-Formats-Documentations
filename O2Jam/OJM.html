@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.ojm file format documentation</title>
+
+    <link rel="stylesheet" href="./Desktop.css">
+
+    <!-- For code syntax highlighting -->
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=sunburst" defer></script>
+</head>
+<body>
+    <main>
+        <div class="Note"><p>Documentation by: ChaosFox/DarkFox, MrKishi, and Vittee</p></div>
+
+        <h1>The .ojm file format</h1>
+        <p>The .ojm file format is used in O2Jam to store audio data, like music and keysounds.
+            <br><br>
+            The .ojm format is binary, you must know the size of each section of the file
+            to correctly read the information. The structure of an .ojm file is more or
+            less simple: an initial header and after that the
+            "music samples". Each music sample is made of 2 components: a header called
+            "sample header" and an "audio chunk" which is the actual audio data.
+            What comes after the sample header is the audio chunk. If there is more than 1
+            music sample, what comes after the audio chunk of the first music sample is
+            another sample header belonging to the next music sample, it goes like that
+            until the end of the file.
+            <br><br>
+            The way of reading an .ojm file depends on something called "signature", which
+            is a null-terminated string of 4 bytes at the very beginning of the file. The
+            signature defines the type of the .ojm file. The values the signature can present
+            are (as far as we know): "M30", "OMC", and "OJM"; so, if the signature is "M30" it
+            means that the type of the file is M30 and that it is an "OJM/M30" file, the same
+            happens with the other signatures.
+            <br><br>
+            The signature also defines the contents of the initial header and the contents of
+            the sample headers. OJM/M30 files contain "M30 initial headers" and "M30 sample
+            headers". The same applies for OJM/OMC and OJM/OJM files.
+        </p>
+
+        <h2>M30 signature</h2>
+        <p>The audio chunks for OJM/M30 files are in .ogg and they might be encoded.
+            If they are, you must decode them to correctly play the audio. Keep reading
+            to know how to decode them.
+        </p>
+
+        <table>
+            <caption>M30 initial header (size 28 bytes)</caption>
+            <thead>
+                <th>Byte start</th>
+                <th>Description</th>
+                <th>Type/Size</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0</td>
+                    <td>File signature: A null-terminated string that reads "M30". It is better to process
+                        the signature as an integer whose value is 0x0030334D (3,158,861 in base 10).
+                    </td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>File version: Internal version of the file. You can ignore this.</td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Encoding flag: An integer that indicates the encoding method applied to the audio chunks. (See below)</td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>Music samples quantity: Total music samples inside the file, but this isn't reliable. (See below)</td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td>Music samples start offset: The offset for the beginning of the first music sample.
+                        Usually after the initial header (at the 28th byte).
+                    </td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>20</td>
+                    <td>Payload size: Size of the file in bytes minus the size of the initial header.</td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+                <tr>
+                    <td>24</td>
+                    <td>Padding: No meaningful information.</td>
+                    <td>Integer<br>4 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- <h2>M30 initial header - Remarks</h2> -->
+        <h3>Encoding flag</h3>
+        <p>The encoding methods can be:
+            <br>
+            &gt; scramble1 (if flag value = 1).
+            <br>
+            &gt; scramble2 (if flag value = 2).
+            <br>
+            &gt; decode (if flag value = 4).
+            <br>
+            &gt; decrypt (if flag value = 8).
+            <br>
+            &gt; nami (if flag value = 16).
+            <br>
+            &gt; 0412 (if flag value = 32).
+            <br><br>
+            We actually only know how to decode audio chunks that have been encoded using
+            the nami method or the 0412 method. The other encoding methods haven't been
+            seen as far as we know.
+            <br><br>
+            Here is how to decode an audio chunk that was encoded with the nami or 0412 method:
+            <!-- It is important to notice that if the data is not a multiple of 4, the remaining bytes are not XOR'ed -->
+        </p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+void nami_xor(std::vector&lt;char&gt;&amp; audio_chunk)
+{
+    for (int i = 0; i + 3 &lt; audio_chunk.size(); i += 4)
+    {
+        audio_chunk[i] ^= 110; // replace 110 with 48 if decoding 0412 encoding
+        audio_chunk[i + 1] ^= 97; // replace 97 with 52 if decoding 0412 encoding
+        audio_chunk[i + 2] ^= 109; // replace 109 with 49 if decoding 0412 encoding
+        audio_chunk[i + 3] ^= 105; // replace 105 with 50 if decoding 0412 encoding
+    }
+}
+</code>
+</pre>
+        <!-- code end -->
+
+        <p>An encoding flag with a value of 0 or greater than 32 means that the audio chunks were not encoded.</p>
+        <!-- After decoding a sample chunk, that sample chunk now contains the music/sound in .ogg -->
+
+        <h3>Music samples quantity</h3>
+        <p>
+            We have found differences in the number and the actual quantity of music samples in
+            the file. To correctly do the parsing you must test against the number 52 (the size
+            of a sample header) like this:
+        </p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+int payload_size = m30_initial_header.payload_size;
+for (int i = 0; i &lt; music_sample_quantity; ++i)
+{
+    if (payload_size &lt; 52) // 52 == size of M30 sample header
+    {
+        break; // wrong number of music samples
+    }
+    /* imagine code to read a sample header here */
+    payload_size -= sizeof(m30_sample_header);
+    /* imagine code to read an audio chunk here */ // the size of an audio chunk might be 0
+    payload_size -= m30_sample_header.audio_chunk_size;
+    /* do things */
+}
+</code>
+</pre>
+        <!-- code end -->
+
+        <table>
+            <caption>M30 sample header (size 52 bytes)</caption>
+            <thead>
+                <tr>
+                    <th>Byte start</th>
+                    <th>Description</th>
+                    <th>Type/Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>28</td>
+                    <td>Name of the music sample without the ".ogg" extension.</td>
+                    <td>String 32 bytes</td>
+                </tr>
+                <tr>
+                    <td>60</td>
+                    <td>Size of the audio chunk in bytes.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>64</td>
+                    <td>Code of the music sample. The values can be 0 (background sound (M###))
+                        and 5 (normal sound (W###)).
+                    </td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>66</td>
+                    <td>Unknown fixed data: Unknown.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>68</td>
+                    <td>Unknown music flag: Unknown.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>72</td>
+                    <td>Reference of the music sample. A music sample with reference X will be
+                        played when the note with reference X is hit.
+                    </td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>74</td>
+                    <td>Unknown zero: Unknown.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>76</td>
+                    <td>Total PCM samples in the .ogg</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>OMC and OJM signature</h2>
+        <p>            
+            OJM/OMC and OJM/OJM files are practically identical, the only difference
+            is that the .wav audio chunks in an OJM/OJM aren't encoded.
+            <br><br>
+            The audio chunks for OJM/OMC and OJM/OJM files can be in .wav, .ogg
+            or both. Given that there can be both .wav and .ogg, OJM/OMC and OJM/OJM
+            files have 2 sample header types: ".wav sample header" and ".ogg sample header".
+            <br><br>
+            The .wav audio chunks are encoded and the .ogg audio chunks are not. All
+            .wav audio chunks are keysounds (W###) and all .ogg audio chunks are background (M###).
+            <br><br>
+            A .wav sample header has 6 components that are meant to be part
+            of a real .wav header that you will have to build yourself.
+        </p>
+
+        <table>
+            <caption>OMC or OJM initial header (size 20 bytes)</caption>
+            <thead>
+                <tr>
+                    <th>Byte start</th>
+                    <th>Description</th>
+                    <th>Type/Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0</td>
+                    <td>File signature: A null-terminated string that reads "OMC" or "OJM". It is better to process the
+                        signature as an integer whose value is 0x00434D4F (4,410,703 in base 10) for the OMC signature
+                        and 0x004D4A4F (5,065,295) for the OJM signature.
+                    </td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Total .wav music samples in the .ojm file.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Total .ogg music samples in the .ojm file.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>.wav music samples start offset: The start for the first .wav sample header.
+                        Usually after the initial header, at the 20th byte.
+                    </td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>.ogg music samples start offset: The start for the first .ogg sample header.
+                        Usually after the .wav data.
+                    </td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td>Total size of the .ojm file in bytes.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+
+        <table>
+            <caption>.wav sample header (size 56 bytes)</caption>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Type/Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name of the music sample.</td>
+                    <td>String 32 bytes</td>
+                </tr>
+                <tr>
+                    <td>Audio format: This is part of the real .wav header.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>Number of channels: This is part of the real .wav header.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>Sample rate: This is part of the real .wav header.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>Bit rate: This is part of the real .wav header.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>Block align: This is part of the real .wav header.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>Bits per sample: This is part of the real .wav header.</td>
+                    <td>Short integer 2 bytes</td>
+                </tr>
+                <tr>
+                    <td>Unknown data.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+                <tr>
+                    <td>Size of the audio chunk in bytes. It often happens that the size is equal to
+                        0, skip to the next sample header when that happens.
+                    </td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+
+        <table>
+            <caption>.ogg sample header (size 36 bytes)</caption>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Type/Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name of the music sample.</td>
+                    <td>String 32 bytes</td>
+                </tr>
+                <tr>
+                    <td>Size of the audio chunk in bytes.</td>
+                    <td>Integer 4 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            The .wav and .ogg music samples have an ID that is not told in any sample
+            header, you have to keep track of the IDs by yourself. The ID range for
+            the .wav music samples is 0-999 and for the .ogg music samples is 1000-?.
+            The method for keeping track of the IDs can be:
+        </p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+int file_offset = 20; // where the first .wav sample header starts, usually.
+int sample_id = -1; // 0 is the first ID an .wav music sample can have.
+while (file_offset &lt; ogg_start_offset) // .wav data
+{
+    /* imagine code to read a .wav sample header */
+    file_offset += 56; // 56 is the size of a .wav sample header
+    if (audio_chunk_size == 0)
+    {
+        ++sample_id;
+        continue;
+    }
+    /* imagine code to read a .wav audio chunk */
+    file_offset += audio_chunk_size;
+    ++sample_id
+    /* imagine code to do something with the ID */
+}
+sample_id = 999; // 1000 is the first ID an .ogg music sample can have.
+while (file_offset &lt; filesize) // .ogg data
+{
+    /* same logic as above */
+}
+</code>
+</pre>
+        <!-- code end -->
+
+        <h2>OMC decoding</h2>
+        <p>
+            OJM/OMC files use a mildly elaborate encoding: the data of a .wav audio chunk
+            is encoded and after that it is shuffled. The decoding process involves
+            unshuffling the data and then decode the bytes.
+            <br><br>
+            The next code snippet contains the unshuffling table needed to unshuffle
+            the data of a .wav audio chunk:
+        </p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+const std::array&lt;char, 290&gt; unshuffling_table = {
+    0x10, 0x0E, 0x02, 0x09, 0x04, 0x00, 0x07, 0x01,
+    0x06, 0x08, 0x0F, 0x0A, 0x05, 0x0C, 0x03, 0x0D,
+    0x0B, 0x07, 0x02, 0x0A, 0x0B, 0x03, 0x05, 0x0D,
+    0x08, 0x04, 0x00, 0x0C, 0x06, 0x0F, 0x0E, 0x10,
+    0x01, 0x09, 0x0C, 0x0D, 0x03, 0x00, 0x06, 0x09,
+    0x0A, 0x01, 0x07, 0x08, 0x10, 0x02, 0x0B, 0x0E,
+    0x04, 0x0F, 0x05, 0x08, 0x03, 0x04, 0x0D, 0x06,
+    0x05, 0x0B, 0x10, 0x02, 0x0C, 0x07, 0x09, 0x0A,
+    0x0F, 0x0E, 0x00, 0x01, 0x0F, 0x02, 0x0C, 0x0D,
+    0x00, 0x04, 0x01, 0x05, 0x07, 0x03, 0x09, 0x10,
+    0x06, 0x0B, 0x0A, 0x08, 0x0E, 0x00, 0x04, 0x0B,
+    0x10, 0x0F, 0x0D, 0x0C, 0x06, 0x05, 0x07, 0x01,
+    0x02, 0x03, 0x08, 0x09, 0x0A, 0x0E, 0x03, 0x10,
+    0x08, 0x07, 0x06, 0x09, 0x0E, 0x0D, 0x00, 0x0A,
+    0x0B, 0x04, 0x05, 0x0C, 0x02, 0x01, 0x0F, 0x04,
+    0x0E, 0x10, 0x0F, 0x05, 0x08, 0x07, 0x0B, 0x00,
+    0x01, 0x06, 0x02, 0x0C, 0x09, 0x03, 0x0A, 0x0D,
+    0x06, 0x0D, 0x0E, 0x07, 0x10, 0x0A, 0x0B, 0x00,
+    0x01, 0x0C, 0x0F, 0x02, 0x03, 0x08, 0x09, 0x04,
+    0x05, 0x0A, 0x0C, 0x00, 0x08, 0x09, 0x0D, 0x03,
+    0x04, 0x05, 0x10, 0x0E, 0x0F, 0x01, 0x02, 0x0B,
+    0x06, 0x07, 0x05, 0x06, 0x0C, 0x04, 0x0D, 0x0F,
+    0x07, 0x0E, 0x08, 0x01, 0x09, 0x02, 0x10, 0x0A,
+    0x0B, 0x00, 0x03, 0x0B, 0x0F, 0x04, 0x0E, 0x03,
+    0x01, 0x00, 0x02, 0x0D, 0x0C, 0x06, 0x07, 0x05,
+    0x10, 0x09, 0x08, 0x0A, 0x03, 0x02, 0x01, 0x00,
+    0x04, 0x0C, 0x0D, 0x0B, 0x10, 0x05, 0x06, 0x0F,
+    0x0E, 0x07, 0x09, 0x0A, 0x08, 0x09, 0x0A, 0x00,
+    0x07, 0x08, 0x06, 0x10, 0x03, 0x04, 0x01, 0x02,
+    0x05, 0x0B, 0x0E, 0x0F, 0x0D, 0x0C, 0x0A, 0x06,
+    0x09, 0x0C, 0x0B, 0x10, 0x07, 0x08, 0x00, 0x0F,
+    0x03, 0x01, 0x02, 0x05, 0x0D, 0x0E, 0x04, 0x0D,
+    0x00, 0x01, 0x0E, 0x02, 0x03, 0x08, 0x0B, 0x07,
+    0x0C, 0x09, 0x05, 0x0A, 0x0F, 0x04, 0x06, 0x10,
+    0x01, 0x0E, 0x02, 0x03, 0x0D, 0x0B, 0x07, 0x00,
+    0x08, 0x0C, 0x09, 0x06, 0x0F, 0x10, 0x05, 0x0A,
+    0x04, 0x00
+};
+</code>
+</pre>
+        <!-- code end -->
+
+        <p>To unshuffle the data use the unshuffling table like this:</p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+std::vector&lt;char&gt; unshuffle(const std::vector&lt;char&gt;& buf_encoded)
+{
+    int size = buf_encoded.size();
+    int key = ((size % 17) &lt;&lt; 4) + (size % 17);
+    int block_size = size / 17;
+
+    std::vector&lt;char&gt; buf_plain = buf_encoded;
+
+    for (int block = 0; block &lt; 17; ++block)
+    {
+        int block_start_encoded = block_size * block; // Where is the start of the encoded block
+        int block_start_plain = block_size * unshuffle_table[key]; // Where the final plain block will be
+        std::copy(buf_encoded.begin() + block_start_encoded, buf_encoded.begin() + block_start_encoded + block_size, buf_plain.begin() + block_start_plain);
+        ++key;
+    }
+    return buf_plain;
+}
+</code>
+</pre>
+        <!-- code end -->
+
+        <p>After the data has been unshuffled, decode it like this:</p>
+
+        <!-- code start -->
+<pre class="prettyprint">
+<code class="language-cpp">
+int omc_decode_key = 255;
+int omc_decode_counter = 0;
+void omc_decode(std::vector&lt;char&gt;& audio_chunk, int& omc_decode_key, int& omc_decode_counter)
+{
+    char temporal_key = 0;
+    char chunk_byte = 0;
+    for (int i = 0; i &lt; audio_chunk.size(); ++i)
+    {
+        temporal_key = audio_chunk[i];
+        chunk_byte = audio_chunk[i];
+        if (((omc_decode_key &lt;&lt; omc_decode_counter) & 128) != 0)
+        {
+            chunk_byte = ~chunk_byte;
+        }
+        audio_chunk[i] = chunk_byte;
+        ++omc_decode_counter;
+        if (omc_decode_counter > 7)
+        {
+            omc_decode_counter = 0;
+            omc_decode_key = temporal_key;
+        }
+    }
+}
+</code>
+</pre>
+        <!-- code end -->
+        <p>The .wav audio chunk can be played now, but don't forget to build the real .wav header.</p>
+    </main>
+</body>
+</html>

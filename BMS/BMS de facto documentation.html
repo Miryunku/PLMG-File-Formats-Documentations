@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS de facto documentation</title>
+
+    <link rel="stylesheet" href="./Desktop.css">
+
+    <script src="./Script.js" defer></script>
+</head>
+
+<body>
+    <main>
+        <section>
+            <h1>Table of contents</h1>
+            <nav id="toc-root"></nav>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Introduction to the .bms file format and the BMS community</h1>
+            <p>
+                The .bms file format was created by Urao Yane and NBK in 1998. Urao
+                Yane has <a href="http://bm98.yaneu.com/bm98/bmsformat.html" target="_blank" rel="noopener noreferrer">stated</a>
+                that anyone can use the format freely.
+                <br><br>
+                The purpose of the format is to define the position of multiple notes (among
+                other things) throughout what is called a playfield in a <abbr title="Piano Like Music Game">PLMG</abbr>.
+                In <a href="https://www.youtube.com/watch?v=NQdQnawYISE" target="_blank" rel="noopener noreferrer">here</a>,
+                you can see an example of the gameplay of a PLMG; the place in where the
+                notes are falling is the playfield. Moreover, .bms files can also be (and
+                are) designated as "maps" or "charts" or "notecharts" as these are the
+                common terms for any file format that defines the positions of notes (among
+                other things) in any PLMG.
+                <br><br>
+                Any software that can read .bms files and that lets you play them like in
+                the video from the example can be (and are) called "BMS player" or "BMS client".
+                <br><br>
+                3 file extensions were derived from the .bms file extension: .bme, .bml, and
+                .pms; the format of these files are all the same, with only a few things being
+                added or modified. In modern times, the necessity for the .bme and .bml file
+                extensions does not exist anymore and the only file extension that keeps being necessary
+                is .pms (to know why the .pms file extension is still necessary, see <a href="#toc-item-28">Note channels</a>).
+                If you were to change the file extension of a .bme or a .bml file to .bms, nothing would happen.
+                <br><br>
+                BMS means Be-Music Source. The term "BMS" can make reference to the file
+                format .bms (and its extensions) and it can also function as a generic noun
+                that replaces the name of a BMS player: for example, if someone ask you
+                "what are you doing?" you can answer "I am playing BMS" instead of saying the
+                actual name of the game (the BMS player).
+                <br><br>
+                The Be-Music Source community is a
+                PLMG community, but what makes the BMS community different from every other
+                PLMG community is that the BMS community makes its own music, as well as its own
+                artwork (drawings and/or videos for the songs) and its own software; the BMS
+                community is self-supported and has been since the beginning of its existence.
+            </p>
+
+            <div class="Attention">
+                <p>1) In this document, referring to the file format .bms is equivalent
+                    to also implicitly referring to its extensions .bme, .bml and .pms
+                    unless specified otherwise.
+                    <br><br>
+                    2) In this document, ASCII means ASCII-compatible.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h1 class="toc-item">.bms file structure</h1>
+
+            <div class="Attention">
+                <p>Most (if not all) .bms files are encoded in Shift-JIS (Windows's code page 932).</p>
+            </div>
+
+            <p>
+                .bms files are composed of <span class="Highlight">Commands</span>,
+                there are 3 types of commands: a <span class="Highlight">header command</span>,
+                a <span class="Highlight">definition command</span> and a
+                <span class="Highlight">channel command</span>.
+                <br><br>
+                A header command starts with the ASCII character "#" followed by
+                a case-insensitive ASCII string that defines the variable that is
+                going to be set (for more information about what variables can be
+                set, see the section called <a href="#toc-item-2">.bms header list</a>)
+                and then an ASCII space followed by a string that might or might
+                not be ASCII compatible.
+                <br>
+                <span class="Highlight2">Example: #ARTIST ねこみりん</span>
+                <br>
+                <span class="Highlight2">Example: #artist Nekomirin</span>
+                <br><br>
+                A definition command starts with the ASCII character "#" followed
+                by any of the next case-insensitive ASCII strings: "WAV",
+                "BMP", "BPM", "STOP"; followed by 2 ASCII alphanumeric characters
+                representing a number in base 36 (in the range 01~ZZ) indicating
+                an index, followed by an ASCII space and then a value (for more
+                information about what value, see the section called
+                <a href="#toc-item-2">.bms header list</a>).
+                <br>
+                <span class="Highlight2">Example: #WAV1A bbt02_01.wav</span>
+                <br>
+                <span class="Highlight2">Example: #BMP11 nnms_niwaka.bmp</span>
+                <br>
+                <span class="Highlight2">Example: #BPM02 280</span>
+                <br>
+                <span class="Highlight2">Example: #STOP01 1536</span>
+                <br><br>
+                A channel command starts with the ASCII character "#" followed by 3
+                ASCII numbers in the range 000~999 indicating a measure, followed by
+                2 ASCII alphanumeric characters representing a number in base 36 (in
+                the range 01~ZZ) indicating a channel (for more information about
+                channels, see the section called
+                <a href="#toc-item-19">Channel list</a>), followed by an ASCII
+                colon and then a string of ASCII alphanumeric characters.
+                <br>
+                <span class="Highlight2">Example: #00513:01AB6FW9</span>
+                <br><br>
+                In a channel command, the string of characters after the colon is
+                called the <span class="Highlight">message</span>. The quantity
+                of characters in a message must be even, this is because each pair
+                of characters represents an index previously defined by a
+                definition command, and that index corresponds to a #WAV or a #BMP
+                (or the others) depending on the channel. For example:
+                <br>
+                Given the next definition commands:
+                <br>
+                <span class="Highlight2">#WAV01 audio.wav</span>
+                <br>
+                <span class="Highlight2">#BMP01 image.bmp</span>
+                <br>
+                And given the next channel commands:
+                <br>
+                <span class="Highlight2">#00101:01</span>
+                <br>
+                <span class="Highlight2">#00104:01</span>
+                <br>
+                A program would not confuse the indexes thanks to the channels,
+                the channel 01 is for audio so the program searches for indexes
+                defined by #WAVs. Similarly, the channel 04 is for background
+                images or videos so the program searches for indexes defined
+                by #BMPs (you can also specify a video file in a #BMP).
+                <br><br>
+                In a message, each pair of characters also represents a division
+                of the space inside a measure and each division divides the space
+                evenly. For example:
+                <br>
+                Given the next definition commands:
+                <br>
+                <span class="Highlight2">#WAVP8 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#WAVCK audio2.wav</span>
+                <br>
+                And given the next channel command:
+                <br>
+                <span class="Highlight2">#01011:00P800CK</span>
+                <br>
+                The space in the measure 10 will be evenly divided into
+                4 parts. The index 00 is special, it is only used for padding
+                and it does not represent an index defined by a definition
+                command. The channel 11 is used to place notes in column 1, so
+                the result of the previous channel command will look like this
+                if the playmode is <abbr title="7Keys + 1Scratch">7K1S</abbr>
+                (to see a list of the playmodes, see <a href="#toc-item-28">Note channels</a>):
+            </p>
+
+            <img src="./Images/ChannelCommand-Example1.png">
+
+            <p>
+                When the player hits the first note the audio file "audio1.wav"
+                will play; similarly, when the player hits the second note the
+                audio file "audio2.wav" will play.
+                <br><br>
+                Lastly, a .bms file is divided into 2 fields: the commonly called
+                <span class="Highlight">header field</span> and the commonly
+                called <span class="Highlight">main-data field</span>. The header
+                field is where the header commands and the definition commands are
+                put, and the main-data field is where the channel commands are put.
+                The header commands and the definition commands within the header
+                field can go in any order: the definition commands can go before the
+                header commands, viceversa, or mixed. The header field always goes
+                before the main-data field.
+                <br><br>
+                The only way to know where you are in a .bms file is by checking
+                if you still haven't read a channel command, which means that you
+                are in the header field.
+            </p>
+        </section>
+
+        <section>
+            <h1 class="toc-item">.bms header list</h1>
+            <h2 class="toc-item">#PLAYER</h2>
+            <p>
+                The use of this header is deprecated. It was used to indicate
+                the playmode but because of mistakes in the creation of .bms
+                files throughout the years, trusting this header is dangerous.
+                Modern as well as old BMS-clients do not use this header at
+                all and instead identify the playmode by analyzing the channels
+                used in the channel commands throughout the .bms file.
+                <br><br>
+                To see how to identify the playmode by analyzing the channels,
+                see <a href="#toc-item-30">Identifying the intended playmode</a>.
+            </p>
+
+            <h2 class="toc-item">#TITLE</h2>
+            <p>
+                Defines the song's name. You can also define the value of the
+                header #SUBTITLE by putting (at the end of the value of the
+                header #TITLE) a string between any of the following ASCII
+                characters: [], (), &lt;&gt;, --, "".
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice[EXTREME]</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice [EXTREME]</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice (EXTREME)</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice &lt;EXTREME&gt;</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice -EXTREME-</span>
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice "EXTREME"</span>
+                <br>
+                The character FULLWIDTH TILDE (U+FF5E) can also be used:
+                <br>
+                <span class="Highlight2">Example: #TITLE Love & Justice ～EXTREME～</span>
+            </p>
+
+            <h2 class="toc-item">#SUBTITLE</h2>
+            <p>
+                This is used to define the map's difficulty name.
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE [NORMAL7]</span>
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE (NORMAL7)</span>
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE &lt;NORMAL7&gt;</span>
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE -NORMAL7-</span>
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE "NORMAL7"</span>
+            </p>
+
+            <h2 class="toc-item">#GENRE</h2>
+            <p>
+                Defines the song's genre. Composers usually write whatever they want.
+                <br>
+                <span class="Highlight2">Example: #GENRE TECHNO</span>
+                <br>
+                <span class="Highlight2">Example: #GENRE IMAGINARY FLOWER</span>
+            </p>
+
+            <h2 class="toc-item">#ARTIST</h2>
+            <p>
+                This is used to give credits to the ones who participated in the
+                making of the song along with its accompanying visual art (if any).
+                <br>
+                <span class="Highlight2">Example: #ARTIST EXCITECH</span>
+                <br>
+                <span class="Highlight2">Example: #ARTIST Music: ルゼ / BGA: 石王マサト / Vocals: えみゅう</span>
+            </p>
+
+            <h2 class="toc-item">#SUBARTIST</h2>
+            <p>
+                This is used in conjunction with #ARTIST to give credits to the
+                ones who participated in the making of the song along with its
+                accompanying visual art (if any). However, it is more common that
+                #SUBARTIST is used only to define who made the map.
+                <br>
+                <span class="Highlight2">Example: #SUBARTIST <abbr title="The mapper">obj.</abbr> 夢瑠</span>
+                <br>
+                <span class="Highlight2">Example: #SUBARTIST Illustrator: しぐれぷに子</span>
+                <br>
+                <span class="Highlight2">Example: #SUBARTIST BGA:Can.D-mtmrw / OBJ:Omino</span>
+                <br>
+                <span class="Highlight2">Example: #SUBARTIST Movie:To7 / obj:saaa</span>
+            </p>
+
+            <h2 class="toc-item">#STAGEFILE</h2>
+            <p>
+                Defines an image for the player to see when the player selects a
+                map (Example: at the very beginning of
+                <a href="https://www.youtube.com/watch?v=bH4QvCwE7kU" target="_blank" rel="noopener noreferrer">this</a>
+                video, Entozer selects a map to play and for briefs moments an
+                image of a girl is shown, that image is the so-called Stagefile).
+                <br><br>
+                The supported image formats are the following: .png, .bmp, .jpg.
+                The recommended size is 640x480.
+                <br>
+                <span class="Highlight2">Example: #STAGEFILE nnms_title.png</span>
+            </p>
+
+            <h2 class="toc-item">#PLAYLEVEL</h2>
+            <p>
+                Defines the difficulty level for the map. This header takes an integer
+                for its value.
+                <br>
+                <span class="Highlight2">Example: #PLAYLEVEL 20</span>
+            </p>
+
+            <h2 class="toc-item">#RANK</h2>
+            <p>
+                Defines the harshness of the judgement windows. The de facto standard
+                values this header can take are the integers in the range 0~3. The
+                classification of the harshness according to the value of this header
+                is as follows:
+                <br><br>
+                0 = Very Hard
+                <br>
+                1 = Hard
+                <br>
+                2 = Normal
+                <br>
+                3 = Easy
+                <br><br>
+                The harshness of the judgement windows according to the value of #RANK is
+                implementation-defined.
+                <br>
+                <span class="Highlight2">Example: #RANK 2</span>
+            </p>
+
+            <h2 class="toc-item">#TOTAL</h2>
+            <p>
+                This header takes a positive integer as its value.
+                <br>
+                TOTAL is the total amount of health points that you will obtain if
+                you hit every note in a map and for every note you got the best judgement
+                or the 2nd best judgement. For example, if a map has 3000 notes and
+                the value of #TOTAL is 3000, you will obtain 1 point of health with
+                each note that you hit and get the best judgement or 2nd best judgement.
+                <br>
+                <span class="Highlight2">Example: #TOTAL 1280</span>
+            </p>
+
+            <h2 class="toc-item">#WAV</h2>
+            <p>
+                This header is used in definition commands. It defines an audio file
+                that will be played at a certain moment in the map. Remember that in
+                definition commands you can't use the index 00 because that index is
+                reserved for padding.
+                <br><br>
+                Despite the name of this header, you can also specify an .ogg file.
+                <br>
+                <span class="Highlight2">Example: #WAV01 piano.wav</span>
+                <br>
+                <span class="Highlight2">Example: #WAV01 piano.ogg</span>
+            </p>
+
+            <div class="Attention">
+                <p>
+                    A commonly used de facto standard behaviour is that if the
+                    value for a #WAV is, for example, "piano.wav" and that file
+                    isn't found, that file will be searched as "piano.ogg" and
+                    viceversa. This allows the distribution of BMS to be able
+                    to use .wav or .ogg files for the same map without affecting
+                    the MD5 checksum of the .bms file, which is used for validation
+                    in the internet rankings; this allows a player to choose
+                    between the .wav version or the .ogg version of a song if
+                    that song is available in both audio formats.
+                </p>
+            </div>
+
+            <h2 class="toc-item">#BMP</h2>
+            <p>
+                This header is used in definition commands. It can define either
+                an image or a video file, and the recommended size for both an
+                image or a video is 256x256.
+                <br><br>
+                The de facto standard image formats are: .bmp, .png, and .jpg.
+                <br>
+                The de facto standard video formats are: .mpg (MPEG-1), and .avi
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyImage.bmp</span>
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyImage.png</span>
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyImage.jpg</span>
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyImage.jpeg</span>
+                <br>
+                <span class="Highlight2">- - - - - - - - - -</span>
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyVideo.mpg</span>
+                <br>
+                <span class="Highlight2">Example: #BMP01 MyVideo.avi</span>
+                <br><br>
+                When a #BMP is defined with the index 00 it means that the
+                image file specified by that #BMP will be shown when the player
+                makes an error. The image file specified by the #BMP00 will be
+                used for this purpose until another image file for this purpose
+                is specified by the channel 06 (for more information about the
+                channel 06, see <a href="#toc-item-24">Channel 06</a>). For example:
+                <br><br>
+                <span class="Highlight2">#BMP00 Error1.bmp</span> [Error1.bmp will be used since the beginning,
+                there is no necessity for a channel command]
+                <br>
+                <span class="Highlight2">#BMP01 Error2.bmp</span>
+                <br>
+                <span class="Highlight2">#03206:01</span> [Error2.bmp will be used from this point]
+                <br><br>
+                To see an example of image files that are shown when a player makes an error, see
+                <a href="https://youtu.be/E6jtdIB9nts?t=61" target="_blank" rel="noopener noreferrer">this</a> video.
+                <br><br>
+                If an image isn't found as a, for example, .bmp, it will be
+                searched as a .png and then (if not found) as an .jpg; this
+                behaviour occurs with any permutation.
+            </p>
+
+            <h2 class="toc-item">#BPM</h2>
+            <p>
+                This header is always used in a header command only once in
+                a .bms file, after that it is used in definition commands. In
+                a header command, it defines the initial BPM of the song.
+                This header takes an integer or a decimal for its value.
+                <br>
+                <span class="Highlight2">Example: #BPM 180</span>
+                <br>
+                <span class="Highlight2">Example: #BPM 222.22</span>
+                <br>
+                <span class="Highlight2">Example: #BPM01 190</span>
+                <br>
+                <span class="Highlight2">Example: #BPM01 333.33</span>
+            </p>
+
+            <h2 class="toc-item">#STOP</h2>
+            <p>
+                This header is used in definition commands. A STOP object
+                makes the scrolling speed have a value of 0 for a definite
+                period of time (<a href="https://youtu.be/Sona5OFt8r0?t=110" target="_blank" rel="noopener noreferrer">example</a>).
+                #STOP takes a positive integer as its value, that value represents
+                how many 1/192 portions of a measure the STOP object will be in effect.
+                <br>
+                <span class="Highlight2">Example: #STOP01 1536</span> [(1/192) * 1536 = 8 measures]
+                <br>
+                The formula to calculate how many milliseconds the STOP object will be in effect is:
+                <br>
+                <span class="Highlight2">((1/192) * Value_of_STOP_object) * (duration_of_a_beat_in_ms * beats_per_measure)</span>
+                <br><br>
+                A STOP object must not be affected by the channel 02, which
+                modifies the length of a measure.
+            </p>
+
+            <h2 class="toc-item">#LNTYPE</h2>
+            <p>
+                Defines how long-notes are going to be described in the messages of
+                long-note channel commands (to see which channels are used for long-notes, see
+                <a href="#toc-item-28">Note channels</a>). The long-note channels
+                searches indexes on #WAVs.
+                <br><br>
+                The values this header can take are the number 1 or the number 2; 1
+                means that long-notes are going to be described in <span class="Highlight">RDM-notation</span>
+                and 2 means <span class="Highlight">MGQ-notation</span>. If #LNTYPE is
+                not present in a .bms file, RDM-notation will be assumed.
+                <br>
+                <span class="Highlight2">Example: #LNTYPE 1</span>
+                <br>
+                <span class="Highlight2">Example: #LNTYPE 2</span>
+                <br><br>
+                <span class="HighlightAux">RDM-notation is as follows:</span>
+                <br>
+                The head of a long-note will be placed in the first index that is not 00 and the
+                tail of a long-note will be placed in the second index that is not 00.
+                <br><br>
+                Example 1:
+                <br>
+                Given the next definition commands:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#WAVB2 audio2.wav</span>
+                <br>
+                And given the next channel command:
+                <br>
+                <span class="Highlight2">#01552:00B100B2</span>
+                <br>
+                The result will be like this if the playmode is <abbr title="5Keys + 1Scratch">5K1S</abbr>
+                (to see a list of the playmodes, see <a href="#toc-item-28">Note channels</a>):
+            </p>
+
+            <img src="./Images/RDM-notation-Example1.png">
+
+            <p>
+                Example 2:
+                <br>
+                Given the next definition commands:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#WAVB2 audio2.wav</span>
+                <br>
+                And given the next channel commands:
+                <br>
+                <span class="Highlight2">#01552:B1</span>
+                <br>
+                <span class="Highlight2">#01752:00B2</span>
+                <br>
+                The result is that the head of the long-note is placed at the beginning of the measure 15
+                and the tail is placed in the middle of the measure 17, which means that the long-note
+                occupies the entire measures 15 and 16, and ends in the middle of the measure 17.
+                <br><br>
+                With RDM-notation, the only index that will be searched in the #WAVs is the index that defines the
+                head of a long-note, which means that the head is the only part of a long-note that generates
+                audio. Which also means that #WAVB2 won't be played even if the audio file exists. Any index that
+                is not 00 can be used to define the tail of a long-note, however, as a convention the index ZZ is used.
+                <br><br>
+                <span class="HighlightAux">MGQ-notation is as follows:</span>
+                <br>
+                The head of a long-note will be placed in the first index that is not 00 and the
+                tail of a long-note will be placed in the first index that is 00 (after the index
+                that defines the long-note head), which means that there must be indexes that are not
+                00 between the head and the tail.
+                <br><br>
+                MGQ-notation is similar to the RDM-notation in the aspect that the only index that will be searched
+                in the #WAVs is the index that defines the head of the long-note and therefore the only part of a
+                long-note that generates audio is the head. Any indexes that are not 00 can be used to put them
+                between the head and the tail, however, as a convention the index ZZ is used.
+                <br><br>
+                Example 1:
+                <br>
+                Given the next definition command:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                And given the next channel command:
+                <br>
+                <span class="Highlight2">#01552:00B1ZZZZZZZZZZ000000</span>
+                <br>
+                The result is as follows:
+            </p>
+
+            <img src="./Images/MGQ-notation-Example1.png">
+
+            <p>
+                Example 2:
+                <br>
+                Given the next definition command:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                And given the next channel commands:
+                <br>
+                <span class="Highlight2">#01552:B1</span>
+                <br>
+                <span class="Highlight2">#01752:ZZ00</span>
+                <br>
+                The result is that the head of the long-note is placed at the beginning of the measure 15
+                and the tail is placed in the middle of the measure 17, which means that the long-note
+                occupies the entire measures 15 and 16, and ends in the middle of the measure 17.
+            </p>
+
+            <div class="Caution">
+                <p>MGQ-notation is deprecated and should only be supported for backward compatibility.</p>
+            </div>
+
+            <h2 class="toc-item">#LNOBJ</h2>
+            <p>
+                This header is used in a definition command; there must be only 1 #LNOBJ header
+                in a .bms file. This header takes an index (in base 36 and in the range 01~ZZ)
+                as its value and that index will be interpreted as a long-note tail. The index
+                is used with note channels that aren't long-note channels (to see the note channels,
+                see <a href="#toc-item-28">Note channels</a>). Any index that is not 00 can be
+                used as the value for #LNOBJ, however, as a convention the index ZZ is used.
+                <br><br>
+                It functions as follows: If the index is found in a message of a note channel command,
+                the index (that is not 00) that comes before the index defined by #LNOBJ is going to
+                be interpreted as a long-note head.
+                <br><br>
+                Example:
+                <br>
+                Given the next definition commands:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#LNOBJ ZZ</span>
+                <br>
+                And given the next channel command:
+                <br>
+                <span class="Highlight2">#01512:00B1B1ZZB10000ZZB100</span>
+                <br>
+                The result will be as follows:
+            </p>
+
+            <img src="./Images/LNOBJ-Example.png">
+
+            <p>
+                This way of defining long-notes is called <span class="Highlight">RDM-notation type 2</span>.
+            </p>
+
+            <div class="Attention">
+                <p>
+                    A .bms file should use only 1 way to define long-notes. Combining notations in
+                    a single .bms file is considered bad practice.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Channel list</h1>
+
+            <h2 class="toc-item">01</h2>
+            <p>
+                Searches indexes on: #WAV
+                <br><br>
+                This channel is used to place audio objects that must be played independently of the
+                player's input. Those audio objects are not drawn. For example:
+                <br>
+                <span class="Highlight2">#WAVB1 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#WAVB2 audio2.wav</span>
+                <br>
+                <span class="Highlight2">#01501:B100B200</span>
+            </p>
+
+            <h2 class="toc-item">02</h2>
+            <p>
+                Searches indexes on: None.
+                <br><br>
+                This channel modifies the length of a measure by modifying the quantity of beats of that measure.
+                The value it takes is an integer or a decimal. To calculate the new beat quantity
+                (and consequently the length) of the affected measure, multiply the value put in
+                the channel by 4 (4 is the default amount of beats in a measure).
+                <br>
+                <span class="Highlight2">Example: #01502:1</span> [4 beats in measure 15. This is the default value for all measures]
+                <br>
+                <span class="Highlight2">Example: #01502:2</span> [8 beats in measure 15]
+                <br>
+                <span class="Highlight2">Example: #01502:0.75</span> [3 beats in measure 15]
+            </p>
+
+            <h2 class="toc-item">03</h2>
+            <p>
+                Searches indexes on: None.
+                <br><br>
+                This channel is used to change the BPM of the song. This channel doesn't search for
+                #BPM indexes, instead it takes a hexadecimal number for its value (in the range 01~FF)
+                and that value will be interpreted as a number in base 10.
+                <br>
+                <span class="Highlight2">Example: #01503:A0</span> [A0 in base 10 = 160 BPM]
+                <br>
+                <span class="Highlight2">Example: #01503:003C00</span> [3C in base 10 = 60 BPM]
+            </p>
+
+            <h2 class="toc-item">04</h2>
+            <p>
+                Searches indexes on: #BMP
+                <br><br>
+                This channel is used to place the starting point in where an image file or video file is going to be shown.
+                <br><br>
+                Example 1:
+                <br>
+                <span class="Highlight2">#BMP01 MyImage1.bmp</span>
+                <br>
+                <span class="Highlight2">#BMP02 MyImage2.bmp</span>
+                <br>
+                <span class="Highlight2">#01504:0102</span>
+                <br>
+                The result is that MyImage1.bmp will be shown at the start of the measure 15 and
+                MyImage2.bmp will be shown at the middle of the measure 15.
+                <br><br>
+                Example 2:
+                <br>
+                <span class="Highlight2">#BMP01 MyVideo1.mpg</span>
+                <br>
+                <span class="Highlight2">#00104:01</span>
+                <br>
+                The result is that MyVideo1.mpg will start playing at the beginning of the measure 1.
+            </p>
+
+            <h2 class="toc-item">06</h2>
+            <p>
+                Searches indexes on: #BMP
+                <br><br>
+                This channel is used to place the starting point for an image file to be shown when
+                a player makes an error. To see what this means, watch
+                <a href="https://youtu.be/E6jtdIB9nts?t=61" target="_blank" rel="noopener noreferrer">this</a> video.
+                <br><br>
+                Example:
+                <br>
+                <span class="Highlight2">#BMP01 Error1.bmp</span>
+                <br>
+                <span class="Highlight2">#01506:01</span> [Starting from measure 15, when a player
+                makes an error Error1.bmp will be shown]
+            </p>
+
+            <h2 class="toc-item">07</h2>
+            <p>
+                Searches indexes on: #BMP
+                <br><br>
+                This channel is used to place the starting point in where an image file or video file is going to be shown.
+                The way of using this channel is the same as the channel 04, the difference between them is that
+                image files placed using the channel 07 are placed above images that were placed using the
+                channel 04. Furthermore, the color black (#000000) in images placed with the channel 07 will
+                become transparent, allowing parts of the image that was placed with the channel 04 to be visible.
+                <br><br>
+                Because of the behaviour described above, the channel 04 is known as the
+                <span class="Highlight">BGA-Layer 1</span> and the channel 07 is known as the
+                <span class="Highlight">BGA-Layer 2</span>.
+            </p>
+
+            <div class="Caution">
+                <p>You should place video files only with the channel 04.</p>
+            </div>
+
+            <h2 class="toc-item">08</h2>
+            <p>
+                Searches indexes on: #BPM
+                <br><br>
+                This channel is used to change the BPM of the song. For example:
+                <br>
+                <span class="Highlight2">#BPM01 150</span>
+                <br>
+                <span class="Highlight2">#01508:01</span>
+                <br>
+                The result is that from the beginning of the measure 15 the BPM of the song will be 150.
+            </p>
+
+            <h2 class="toc-item">09</h2>
+            <p>
+                Searches indexes on: #STOP
+                <br><br>
+                This channel is used to place STOP objects. For example:
+                <br>
+                <span class="Highlight2">#STOP01 192</span>
+                <br>
+                <span class="Highlight2">#01509:01</span>
+            </p>
+
+            <h2 class="toc-item">Note channels</h2>
+            <p>
+                Every note channel searches indexes on #WAVs.
+                <br><br>
+                Note channels are used to position notes in the playfield. The notes
+                positioned by these channels are meant to be hit by the player.
+                <br><br>
+                The existing playmodes are:
+                <a href="./Images/Playfield5K1S.png" target="_blank" rel="noopener noreferrer">5K1S</a>,
+                <a href="./Images/Playfield7K1S.png" target="_blank" rel="noopener noreferrer">7K1S</a>,
+                <a href="./Images/Playfield9K.png" target="_blank" rel="noopener noreferrer">9K</a>,
+                <a href="./Images/Playfield10K2S.png" target="_blank" rel="noopener noreferrer">10K2S</a>,
+                <a href="./Images/Playfield14K2S.png" target="_blank" rel="noopener noreferrer">14K2S</a>.
+            </p>
+
+            <div class="Caution">
+                <p>
+                    For the playmode of a map to correctly be interpreted as 9K, the
+                    file extension of the map must be .pms and not .bms or .bme or .bml.
+                    To know why, see the section <a href="#toc-item-30">Identifying the intended playmode</a>.
+                </p>
+            </div>
+            <br>
+
+            <table>
+                <caption>5K1S [Normal-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>16</td>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table>
+                <caption>5K1S [Long-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>56</td>
+                        <td>51</td>
+                        <td>52</td>
+                        <td>53</td>
+                        <td>54</td>
+                        <td>55</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br><br>
+            <table>
+                <caption>7K1S [Normal-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>16</td>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>18</td>
+                        <td>19</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table>
+                <caption>7K1S [Long-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>56</td>
+                        <td>51</td>
+                        <td>52</td>
+                        <td>53</td>
+                        <td>54</td>
+                        <td>55</td>
+                        <td>58</td>
+                        <td>59</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br><br>
+            <table>
+                <caption>9K [Normal-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>22/18</td>
+                        <td>23/19</td>
+                        <td>24/16</td>
+                        <td>25/17</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table>
+                <caption>9K [Long-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>51</td>
+                        <td>52</td>
+                        <td>53</td>
+                        <td>54</td>
+                        <td>55</td>
+                        <td>62/58</td>
+                        <td>63/59</td>
+                        <td>64/56</td>
+                        <td>65/57</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br><br>
+            <table>
+                <caption>10K2S [Normal-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch1</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+                        <th>Key10</th>
+                        <th>Scratch2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>16</td>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>21</td>
+                        <td>22</td>
+                        <td>23</td>
+                        <td>24</td>
+                        <td>25</td>
+                        <td>26</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table>
+                <caption>10K2S [Long-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch1</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+                        <th>Key10</th>
+                        <th>Scratch2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>56</td>
+                        <td>51</td>
+                        <td>52</td>
+                        <td>53</td>
+                        <td>54</td>
+                        <td>55</td>
+                        <td>61</td>
+                        <td>62</td>
+                        <td>63</td>
+                        <td>64</td>
+                        <td>65</td>
+                        <td>66</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br><br>
+            <table>
+                <caption>14K2S [Normal-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch1</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+                        <th>Key10</th>
+                        <th>Key11</th>
+                        <th>Key12</th>
+                        <th>Key13</th>
+                        <th>Key14</th>
+                        <th>Scratch2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>16</td>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>18</td>
+                        <td>19</td>
+                        <td>21</td>
+                        <td>22</td>
+                        <td>23</td>
+                        <td>24</td>
+                        <td>25</td>
+                        <td>28</td>
+                        <td>29</td>
+                        <td>26</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table>
+                <caption>14K2S [Long-Notes]</caption>
+                <thead>
+                    <tr>
+                        <th>Scratch1</th>
+                        <th>Key1</th>
+                        <th>Key2</th>
+                        <th>Key3</th>
+                        <th>Key4</th>
+                        <th>Key5</th>
+                        <th>Key6</th>
+                        <th>Key7</th>
+                        <th>Key8</th>
+                        <th>Key9</th>
+                        <th>Key10</th>
+                        <th>Key11</th>
+                        <th>Key12</th>
+                        <th>Key13</th>
+                        <th>Key14</th>
+                        <th>Scratch2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>56</td>
+                        <td>51</td>
+                        <td>52</td>
+                        <td>53</td>
+                        <td>54</td>
+                        <td>55</td>
+                        <td>58</td>
+                        <td>59</td>
+                        <td>61</td>
+                        <td>62</td>
+                        <td>63</td>
+                        <td>64</td>
+                        <td>65</td>
+                        <td>68</td>
+                        <td>69</td>
+                        <td>66</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Combination of messages of channel commands</h1>
+            <p></p>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Identifying the intended playmode</h1>
+            <p></p>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Control flow in .bms</h1>
+            <p>
+                In the .bms file format, <span class="Highlight">control flow</span> refers
+                to the ability of randomizing which parts of a .bms file are going to be
+                parsed. The way this is done is by using the next headers: #RANDOM, #IF, #ENDIF;
+                you use them like this:
+                <br><br>
+                <span class="Highlight2">#RANDOM 3</span> [Generates a random integer in the range 1~3]
+                <br>
+                <span class="Highlight2">#IF 1</span>
+                <br>
+                <span class="Highlight2">#01511:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br>
+                <span class="Highlight2">#IF 2</span>
+                <br>
+                <span class="Highlight2">#01512:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br>
+                <span class="Highlight2">#IF 3</span>
+                <br>
+                <span class="Highlight2">#01513:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br><br>
+                A #RANDOM command should always be followed by an #IF header (like in the previous example).
+                This is because there are BMS applications that will ignore commands written between
+                #RANDOM and #IF, for example:
+                <br><br>
+                <span class="Highlight2">#RANDOM 3</span>
+                <br>
+                <span class="Highlight3">#01511:01</span>
+                <br>
+                <span class="Highlight3">#01512:01</span>
+                <br>
+                <span class="Highlight2">#IF 1</span>
+                <br>
+                <span class="Highlight2">#01513:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br>
+                <span class="Highlight2">#IF 2</span>
+                <br>
+                <span class="Highlight2">#01514:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br>
+                <span class="Highlight2">#IF 3</span>
+                <br>
+                <span class="Highlight2">#01515:01</span>
+                <br>
+                <span class="Highlight2">#ENDIF</span>
+                <br>
+                The lines marked in red will be ignored by some BMS applications.
+                <br><br>
+                You can write control flow anywhere in a .bms file, for example, you can
+                randomize the #TITLE header.
+                <br><br>
+                From a de facto standard perspective, the headers from the previous examples
+                are the only headers that exist to write control flow.
+            </p>
+
+            <div class="Attention">
+                <p>
+                    Using control flow for the purpose of randomizing the placement
+                    of normal-notes and long-notes is obsolete because every modern
+                    BMS player has a built-in function to do exactly that.
+                </p>
+            </div>
+
+            <h2 class="toc-item">Non de facto standard</h2>
+            <h3 class="toc-item">#ELSEIF and #ELSE</h3>
+            <p>The #ELSEIF header goes between the #IF header and the #ENDIF header, and it can appear
+                one or more times. The #ELSEIF header should be exclusive in that if you repeat
+                the header with the same value as the corresponding #IF header or other #ELSEIF header,
+                only the first one to appear is going be chosen. For example:
+                <br><br>
+                <span class="Highlight2">
+                    #RANDOM 4
+                    <br>
+                    #IF 1
+                    <br>
+                    #01511:AA
+                </span>
+                <br>
+                <span class="Highlight3">
+                    #ELSEIF 1
+                    <br>
+                    #01511:BB
+                </span>
+                <br>
+                <span class="Highlight2">
+                    #ELSEIF 2
+                    <br>
+                    #01511:CC
+                    <br>
+                    #ELSEIF 3
+                    <br>
+                    #01511:DD
+                </span>
+                <br>
+                <span class="Highlight3">
+                    #ELSEIF 3
+                    <br>
+                    #01511:EE
+                </span>
+                <br>
+                <span class="Highlight2">
+                    #ELSEIF 4
+                    <br>
+                    #01511:FF
+                    <br>
+                    #ENDIF
+                </span>
+                <br>
+                The lines marked in red should never get applied even if the generated value was 1 or 3.
+                <br><br>
+                The #ELSE header goes between the #IF header and the #ENDIF header, and it can only appear
+                once. Here is an example of usage, making a probability of 1/10:
+                <br><br>
+                <span class="Highlight2">
+                    #RANDOM 10
+                    <br>
+                    #IF 1
+                    <br>
+                    #01511:01
+                    <br>
+                    #ELSE
+                    <br>
+                    #01512:01
+                    <br>
+                    #ENDIF
+                </span>
+                <br><br>
+                You can use #ELSEIF and #ELSE together. For example:
+                <br><br>
+                <span class="Highlight2">
+                    #RANDOM 6
+                    <br>
+                    #IF 1
+                    <br>
+                    #01511:AA
+                    <br>
+                    #ELSE IF 2
+                    <br>
+                    #01511:BB
+                    <br>
+                    #ELSE IF 3
+                    <br>
+                    #01511:CC
+                    <br>
+                    #ELSE
+                    <br>
+                    #01511:DD
+                    <br>
+                    #ENDIF
+                </span>
+            </p>
+
+            <h3 class="toc-item">#ENDRANDOM</h3>
+            <p>The purpose of this header is to mark clearly the end of a #RANDOM block. The usage
+                is simple: #ENDRANDOM is written after the last #IF-#ENDIF pair of the corresponding
+                #RANDOM block. For example:
+                <br><br>
+                <span class="Highlight2">
+                    #RANDOM 3
+                    <br>
+                    #IF 1
+                    <br>
+                    #01511:AX
+                    <br>
+                    #ENDIF
+                    <br>
+                    #IF 2
+                    <br>
+                    #01511:AY
+                    <br>
+                    #ENDIF
+                    <br>
+                    #IF 3
+                    <br>
+                    #01511:AZ
+                    <br>
+                    #ENDIF
+                    <br>
+                    #ENDRANDOM
+                    <br>
+                </span>
+            </p>
+
+            <h3 class="toc-item">#SWITCH header and companions</h3>
+            <p>The companions of the #SWITCH header are: #CASE, #SKIP, #DEF, and #ENDSW. All of
+                them together work similarly to the switch statement of a programming language:
+                The #SKIP header is equivalent to the "break;" statement and the #DEF header is
+                equivalent to the "default:" label. For example:
+                <br><br>
+                <span class="Highlight2">
+                    #SWITCH 6 [Generates an integer in the range 1~6]
+                    <br>
+                    #CASE 1
+                    <br>
+                    #01511:AA
+                    <br>
+                    #SKIP
+                    <br>
+                    #CASE 2
+                    <br>
+                    #01511:AB
+                    <br>
+                    #SKIP
+                    <br>
+                    #CASE 3
+                    <br>
+                    #01511:AC
+                    <br>
+                    #SKIP
+                    <br>
+                    #DEF
+                    <br>
+                    #01511:AD
+                    <br>
+                    #SKIP
+                    <br>
+                    #ENDSW
+                </span>
+                <br><br>
+                Unlike #ENDRANDOM, the usage of the header #ENDSW to mark the end of a #SWITCH block is obligatory.
+                <br><br>
+                The concept of fallthrough also exist, if a #SKIP header is not put to the corresponding #CASE
+                header then fallthrough will occur. For example:
+                <br><br>
+                <span class="Highlight2">
+                    #SWITCH 6
+                    <br>
+                    #CASE 1
+                    <br>
+                    <span class="Highlight3">#01511:AA</span>
+                    <br>
+                    #CASE 2
+                    <br>
+                    <span class="Highlight3">#01511:BB</span>
+                    <br>
+                    #SKIP
+                    <br>
+                    #CASE 3
+                    <br>
+                    #01511:CC
+                    <br>
+                    #SKIP
+                    <br>
+                    #CASE 4
+                    <br>
+                    <span class="HighlightAux">#01511:DD</span>
+                    <br>
+                    #DEF
+                    <br>
+                    <span class="HighlightAux">#01511:EE</span>
+                    <br>
+                    #SKIP
+                    <br>
+                    #ENDSW
+                </span>
+                <br>
+                If the generated value was 1, the red lines will be applied. If the generated value
+                was 4, the green lines will be applied.
+                <br><br>
+                It is not necessary for #DEF to come last, but if it does, it is also not necessary
+                to put the corresponding #SKIP. Needless to say, it is good practice to put #DEF at last
+                and attach the corresponding #SKIP.
+            </p>
+
+            <h3 class="toc-item">Nested control flow</h3>
+            <p>You can nest #RANDOM blocks and #SWITCH blocks, for example:</p>
+
+<pre class="Highlight2">
+#RANDOM 3
+    #IF 1
+        #01511:AA
+    #ENDIF
+    #IF 2
+        #01511:BB
+        #01511:CC
+        #SWITCH 6
+            #CASE 1
+                #01511:PP
+            #SKIP
+            #CASE 2
+                #01511:QQ
+            #SKIP
+            #CASE 3
+                #01511:RR
+                #01511:SS
+            #SKIP
+            #DEF
+                #01511:TT
+                #RANDOM 10
+                    #IF 1
+                        #01511:WW
+                    #ELSE IF 2
+                        #01511:XX
+                    #ELSE
+                        #01511:YY
+                    #ENDIF
+                #ENDRANDOM
+            #SKIP
+        #ENDSW
+    #ENDIF
+    #IF 3
+        #01511:DD
+        #01511:EE
+    #ENDIF
+#ENDRANDOM
+</pre>
+
+            <p>The usage of #ENDRANDOM is recommended when writing nested control flow. Actually, you
+                should always use #ENDRANDOM, even if you are writing non-nested control flow.
+            </p>
+
+            <div class="Caution">
+                <p>The BMS programs that can interpret nested control flow correctly are only a few.</p>
+            </div>
+
+            <h3 class="toc-item">#SETRANDOM and #SETSWITCH</h3>
+            <p>These headers are used to generate a constant value instead of a random value for a control
+                flow block. They take an integer for their value and you use them exactly as if you were using
+                #RANDOM or #SWITCH. Here is an example for #SETRANDOM:
+                <br><br>
+                <span class="Highlight2">
+                    #SETRANDOM 2
+                    <br>
+                    #IF 1
+                    <br>
+                    #01511:01
+                    <br>
+                    #ENDIF
+                    <br>
+                    #IF 2
+                    <br>
+                    #01514:01
+                    <br>
+                    #ENDIF
+                </span>
+                <br>
+                #SETRANDOM will always generate the number 2 so the "#IF 2" part will always be chosen.
+                <br><br>
+                Here is an example for #SETSWITCH:
+                <br><br>
+                <span class="Highlight2">
+                    #SETSWITCH 1
+                    <br>
+                    #CASE 1
+                    <br>
+                    #01511:AA
+                    <br>
+                    #SKIP
+                    <br>
+                    #CASE 2
+                    <br>
+                    #01511:BB
+                    <br>
+                    #SKIP
+                    <br>
+                    #ENDSW
+                </span>
+                <br>
+                #SETSWITCH will always generate the number 1 so the "#CASE 1" part will always be chosen.
+                <br><br>
+                Probably, these commands were developed as testing tools.
+            </p>
+            
+            <h2 class="toc-item">Syntax errors</h2>
+            <p>Currently, there is no BMS editor that supports the creation of control flow, all the
+                control flow in any .bms file has been written by hand. As a consequence, there are .bms
+                files that present control flow syntax errors, this section enumerates them:
+                <br><br>
+                &gt; #RANDOM has been misspelled as #RONDAM.
+                <br><br>
+                &gt; #RANDOM commands without a space between the "#RANDOM" and the value. For example:
+                <br>
+                <span class="Highlight2">#RANDOM4 instead of #RANDOM 4</span>
+                <br><br>
+                &gt; #IF statements starting with ＃ (U+FF03: FULLWIDTH NUMBER SIGN).
+                <br><br>
+                &gt; #IF statements without a space between the "#IF" and the value. For example:
+                <br>
+                <span class="Highlight2">#IF2 instead of #IF 2</span>
+                <br><br>
+                &gt; #IF statements with the same value. For example:
+                <br>
+                <span class="Highlight2">
+                    #IF 3
+                    <br>
+                    #01511:AA
+                    <br>
+                    #ENDIF
+                    <br>
+                    #IF 3
+                    <br>
+                    #01512:BB
+                    <br>
+                    #ENDIF
+                </span>
+                <br><br>
+                &gt; #IF statements without a corresponding #ENDIF. For example:
+                <br>
+                <span class="Highlight2">
+                    #IF 1
+                    <br>
+                    #01511:A1
+                    <br>
+                    #IF 2
+                    <br>
+                    #01512:A1
+                    <br>
+                    #ENDIF
+                </span>
+                <br><br>
+                &gt; "#END IF" instead of #ENDIF.
+                <br><br>
+                &gt; "#IFEND" instead of #ENDIF.
+                <br><br>
+                &gt; Surplus #ENDIF statements. For example:
+                <br>
+                <span class="Highlight2">
+                    #IF 1
+                    <br>
+                    #01511:VM
+                    <br>
+                    #ENDIF
+                    <br>
+                    #ENDIF
+                </span>
+            </p>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Recommendations for programmers</h1>
+            <p>&gt; You should output the header commands before the definition commands.
+                <br><br>
+                &gt; You should output headers in uppercase. Instead of #title,
+                output #TITLE and instead of #wav, output #WAV.
+                <br><br>
+                &gt; You should output indexes in uppercase. Instead of #WAVxy, output
+                #WAVXY.
+                <br><br>
+                &gt; Always write difficulty names only in the header #SUBTITLE.
+                <br><br>
+                &gt; You should support the channel 03 only for backward compatibility,
+                to change the BPM of a song use only the channel 08.
+                <br><br>
+                &gt; Only allow #STOP values that are positive integers. And don't allow
+                STOP objects that have a long duration, because when someone is playing
+                a game is because said person wants to play the game.
+                <br><br>
+                &gt; Always support the .flac audio format.
+                <br><br>
+                &gt; Only support audio formats that do not add silence at the beginning
+                and/or end of the audio data.
+            </p>
+        </section>
+
+        <section>
+            <h1 class="toc-item">Special cases to be aware of when parsing</h1>
+            <p>
+                &gt; A line might have an exagerated size, for example, over 500,000 characters.
+                This might happen only in the main-data field.
+                <br><br>
+                &gt; A line might have heading and trailing whitespace.
+                <br><br>
+                &gt; There might be more than one type of end-of-line in a single file (CRLF, CR, LF).
+                <br><br>
+                &gt; A command might start with ＃ (U+FF03: FULLWIDTH NUMBER SIGN).
+                <br><br>
+                &gt; There might be invalid values in the message of a channel command.
+                <br>
+                <span class="Highlight2">Example: #03701:00AE文字93</span>
+                <br><br>
+                &gt; The quantity of ASCII alphanumeric characters of the message of a channel
+                command might not be a multiple of 2. If this happens, ignore the last character.
+                <br><br>
+                &gt; A message in a channel command might contain an index that was never defined.
+                For example:
+                <br>
+                <span class="Highlight2">#WAV01 audio1.wav</span>
+                <br>
+                <span class="Highlight2">#WAV02 audio2.wav</span>
+                <br>
+                <span class="Highlight2">#01501:010203</span> (index 03 was never defined)
+                <br><br>
+                &gt; You might encounter multiple channel commands for the same measure and
+                channel with the message being only a "00". For example:
+                <br>
+                <span class="Highlight2">#00101:00</span>
+                <br>
+                <span class="Highlight2">#00101:00</span>
+                <br>
+                <span class="Highlight2">#00101:00</span>
+                <br><br>
+                &gt; There might be objects (that can't be positioned in the same place)
+                positioned in the same place with channels commands. For example:
+                <br>
+                <span class="Highlight2">#BPM01 200</span>
+                <br>
+                <span class="Highlight2">#BPM02 100</span>
+                <br>
+                <span class="Highlight2">#05508:01</span>
+                <br>
+                <span class="Highlight2">#05508:02</span>
+                <br>
+                If this happens, the latest channel command is adopted.
+                <br><br>
+                &gt; The channel 02 might be used twice or more times for the same measure. For example:
+                <br>
+                <span class="Highlight2">#02402:0.75</span>
+                <br>
+                <span class="Highlight2">#02402:2</span>
+                <br>
+                If this happens, the latest channel command is adopted.
+                <br><br>
+                &gt; There might be more than 1 whitespace character between a header and its value.
+                The whitespace might be spaces, tabs, or new lines.
+                <br>
+                <span class="Highlight2">Example: #TITLE[space][space][space]Forest of Sorrow</span>
+                <br>
+                <span class="Highlight2">Example: #WAV01[space][space][space]audio1.wav</span>
+                <br><br>
+                &gt; There might be an ideographic space (U+3000) between a header and its value,
+                but since .bms files are in Shift-JIS, the bytes you should check for are 0x8140.
+                <br>
+                <span class="Highlight2">Example: #TITLE[ideographic space]Forest of Sorrow</span>
+                <br>
+                <span class="Highlight2">Example: #WAV01[ideographic space]audio1.wav</span>
+                <br><br>
+                &gt; There might be a duplication of the same header (for example,
+                defining #TITLE twice). If this happens, the latest header is adopted.
+                <br><br>
+                &gt; There might be an implicit value for #SUBTITLE in the value of the header
+                #TITLE and at the same time a #SUBTITLE header explicitly defined. When this
+                happens, the explicit value for #SUBTITLE takes priority. For example:
+                <br>
+                <span class="Highlight2">#TITLE ADDicTiON4500000 [DifficultyName1]</span>
+                <br>
+                <span class="Highlight2">#SUBTITLE [DifficultyName2]</span>
+                <br>
+                The result is:
+                <br>
+                <span class="Highlight2">ADDicTiON4500000 [DifficultyName2]</span>
+                <br><br>
+                &gt; In the value of #TITLE, there might be 2 strings surrounded by
+                characters that define a value for #SUBTITLE.
+                <br>
+                <span class="Highlight2">Example: #TITLE 煉獄-Purgatorium-[死ぬがよい]</span> [The
+                difficulty name is supposed to be only 死ぬがよい]
+                <br><br>
+                &gt; There might be whitespace around the string for the difficulty name.
+                <br>
+                <span class="Highlight2">Example: #TITLE ADDicTiON4500000 -[space]F u L L[space][space]-</span>
+                <br>
+                <span class="Highlight2">Example: #SUBTITLE -[space]F u L L[space][space]-</span>
+                <br><br>
+                &gt; Sometimes, a value for #SUBTITLE has been defined in #GENRE as if
+                #GENRE was #TITLE. For example:
+                <br>
+                <span class="Highlight2">#GENRE DEJAVU[SP HYPER]</span>
+                <br>
+                The value of #GENRE should be only "DEJAVU". The string "[SP HYPER]"
+                should be at the end of the value for #TITLE or as the value of #SUBTITLE.
+                <br><br>
+                &gt; The index defined by a definition command might have the number 0 suppresed. For example:
+                <br>
+                <span class="Highlight2">#WAVB scymbal.wav (#WAV0B scymbal.wav)</span>
+                <br>
+                <span class="Highlight2">#WAV7 explosion_03L.wav (#WAV07 explosion_03L.wav)</span>
+                <br><br>
+                &gt; The header #GENRE has been misspelled as #GENLE.
+                <br><br>
+                &gt; The file specified in #STAGEFILE might not exist.
+                <br><br>
+                &gt; A file specified in a #WAV or #BMP might not exist.
+                <br><br>
+                &gt; An index specified in the message of a channel command might not exist.
+                <br><br>
+                &gt; There might be multiple #WAVs with different indexes specifying
+                the same audio file.
+                <br><br>
+                &gt; If the BMS uses a video, the video might have sound, which
+                should be silenced.
+                <br><br>
+                &gt; A video might be positioned twice or more times with channel
+                commands, for example:
+                <br>
+                <span class="Highlight2">#BMP01 video.mpg</span>
+                <br>
+                <span class="Highlight2">#00104:01</span>
+                <br>
+                <span class="Highlight2">#03504:01</span>
+                <br>
+                If this happens and the video hasn't ended, the video should be
+                replayed from the start.
+                <br><br>
+                &gt; A .bms file might not have a #BPM header command (which defines
+                the initial BPM of the song). If this happens, the .bms file is
+                invalid.
+                <br><br>
+                &gt; A #BPM (definition command) value might be negative.
+                <br>
+                <span class="Highlight2">Example: #BPM13 -192</span>
+                <br><br>
+                &gt; A #STOP value might be decimal, negative or 0. A decimal
+                value should be converted to an integer, a negative value
+                should be considered as an error, and a value of 0 should be ignored.
+                <br><br>
+                &gt; The duration of a STOP object might be an exagerated value, for
+                example, 1 year.
+                <br><br>
+                &gt; A #BPM and a #STOP might be positioned at the same place with
+                channel commands. For example:
+                <br>
+                <span class="Highlight2">#BPM01 140</span>
+                <br>
+                <span class="Highlight2">#STOP01 576</span>
+                <br>
+                <span class="Highlight2">#07508:01</span>
+                <br>
+                <span class="Highlight2">#07509:01</span>
+                <br>
+                If this happens, process the #BPM first and then the #STOP. The
+                same applies for #WAVs and #BMPs, always process the STOP object
+                at last.
+                <br><br>
+                &gt; 2 or more STOP objects might be positioned at the same place
+                using channel commands. For example:
+                <br>
+                <span class="Highlight2">#STOP01 192</span>
+                <br>
+                <span class="Highlight2">#STOP02 384</span>
+                <br>
+                <span class="Highlight2">#04309:01</span>
+                <br>
+                <span class="Highlight2">#04309:02</span>
+                <br>
+                If this happens, add the duration of the STOP objects into a
+                single duration value. Remember to check for exagerated values.
+                <br><br>
+                &gt; There might be an #LNOBJ index that doesn't have a matching long-note head.
+                If this happens, treat the #LNOBJ index as a normal-note.
+            </p>
+        </section>
+    </main>
+</body>
+
+</html>

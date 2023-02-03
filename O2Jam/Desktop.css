@@ -1,0 +1,66 @@
+body {
+    padding: 1.25rem 3.125rem 1.25rem 3.125rem;
+    background-color: black;
+}
+
+h1, h2, h3 {
+    color: #E8B74B;
+}
+
+:is(article, section, main, header) h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2.125rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+p {
+    font-size: 1.125rem;
+    color: silver;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 0.5rem;
+    border: 1px solid #30363D;
+    color: whitesmoke;
+}
+
+th {
+    text-align: left;
+    background-color: #28231D;
+}
+
+td {
+    background-color: #050100;
+}
+
+table > caption {
+    width: fit-content;
+    padding: 0.3125rem 0.625rem;
+    text-align: left;
+    background-color: #3A3268;
+    color: whitesmoke;
+}
+
+/* || Custom classes */
+
+.Note {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    border: 1px solid white;
+    background-color: #3B3D49;
+}
+
+.Note p {
+    color: whitesmoke;
+}
